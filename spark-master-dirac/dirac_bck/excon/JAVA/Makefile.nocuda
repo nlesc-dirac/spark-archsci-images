@@ -1,0 +1,97 @@
+CXX=g++
+CXXFLAGS=-O3 -Wall -g -fPIC
+JAVAC=javac
+JAVAH=javah
+CASA_LIBDIR=/opt/soft/casacore/lib
+CASA_INCDIR=-I/opt/soft/casacore/include/casacore -I/opt/soft/casacore/include -I/usr/local/include/casacore
+CASA_LIBS=-lcasa_casa -lcasa_tables -lcasa_measures -lcasa_ms -lcfitsio
+LAPACK=-llapack -lblas -lgfortran -lpthread
+LAPACK_DIR=/usr/lib/
+
+WCSI=-I/usr/include/wcslib
+WCSL=-L/usr/lib
+WCSLIBS=-lwcs
+
+JAVA_HOME=/usr/lib/jvm/default
+JAVAINC=-I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux
+
+LDFLAGS=-Wl,--rpath,/opt/soft/casacore/lib,--rpath,../lib
+
+GLIBI=-I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -I/usr/lib/x86_64-linux-gnu/glib-2.0/include/
+GLIBL=-lglib-2.0
+
+
+# with multithread FFTW
+MY_LIBS=-llargefft -lfftw3f_threads -lfftw3f -lm $(WCSLIBS)
+INCLUDES=-I. -I../lib -I../MS -I/usr/lib/jvm/default/include -I/usr/lib/jvm/default/include/linux $(CASA_INCDIR) -I/usr/include $(WCSI) $(GLIBI)
+LIBPATH=-L$(LAPACK_DIR) -L$(CASA_LIBDIR)  -L../lib $(WCSL)
+
+
+## HDFS Support
+#HDFSINC=-I/opt/soft/hadoop/include
+#HDFSLIBPATH=-L/opt/soft/hadoop/lib/native
+#HDFSLIBS=-lhadooppipes -lhadooputils -lhdfs
+
+
+default: clean build
+
+OBJECTS=Driver.o data.o helper.o pthgridder.o pthweighter.o pthpipe_menon.o snapshot.o
+
+Driver.class:Driver.java
+	$(JAVAC) $<
+Driver.h:Driver.class
+	$(JAVAH) $*
+Driver.o:Driver.cpp Driver.h
+	$(CXX) $(CXXFLAGS) $(INCLUDES) $(JAVAINC) $(HDFSINC) -c $<
+libDriver.so:
+	$(CXX) -shared $(CXXFLAGS) $(LDFLAGS) $(INCLUDES)  $(LIBPATH)  $(HDFSLIBPATH) -o $@  $(MY_LIBS) $(LAPACK) $(CASA_LIBS) $(GLIBL) $(HDFSLIBS)
+
+
+clean:
+	cd ../lib && $(MAKE) -f Makefile.nocuda clean
+	cd ../MS && $(MAKE) -f Makefile.nocuda clean
+	rm -rfv *.tmp *.o *.so *.jar *.class test_out
+
+libs:
+	cd ../lib && $(MAKE) -f Makefile.nocuda clean
+	cd ../lib && $(MAKE) -f Makefile.nocuda
+
+ms:
+	cd ../MS && $(MAKE) -f Makefile.nocuda clean
+	cd ../MS && $(MAKE) -f Makefile.nocuda
+
+
+jar: Driver.class
+	@echo "Manifest-Version: 1.0" > manifest.txt
+	@echo "Class-Path: /opt/dirac/excon/JAVA/" >> manifest.txt
+	#@echo "Library-Path: /usr/local/lib/" >> manifest.txt
+	@echo "Library-Path: /opt/soft/casacore/lib/" >> manifest.txt
+	@echo "Main-Class: Driver" >> manifest.txt
+	@echo "" >> manifest.txt
+	@jar cmfv manifest.txt Driver.jar $*
+	@rm -f manifest.txt
+
+
+#export LD_LIBRARY_PATH:=/usr/local/lib
+#export LD_LIBRARY_PATH=/usr/local/lib
+
+.SILENT:test
+test:
+	@rm -rf test_out
+	@mkdir test_out
+	echo
+	echo "TEST:"
+	echo
+	#@echo $(PATH)
+	#java -Djava.library.path=$(shell pwd) -jar Driver.jar -m /opt/dirac/datasets/sm.ms
+	cd test_out && \
+                java -Djava.library.path=/opt/dirac/excon/JAVA \
+                -jar /opt/dirac/excon/JAVA/Driver.jar \
+                -m /opt/dirac/datasets/sm.ms && \
+		rm -rf *.tmp && \
+                echo && \
+                echo && \
+                ls -asl
+
+build: libs ms Driver.class Driver.h Driver.o libDriver.so jar
+all: build test

@@ -1,0 +1,110 @@
+CXX=g++
+CXXFLAGS=-O3 -Wall -g -fPIC
+LDFLAGS=-Wl,--rpath,/opt/soft/casacore/lib,--rpath,../lib
+JAVAC=javac
+JAVAH=javah
+
+CASA_LIBDIR=/opt/soft/casacore/lib
+CASA_INCDIR=-I/opt/soft/casacore/include/casacore -I/opt/soft/casacore/include -I/usr/local/include/casacore
+CASA_LIBS=-lcasa_casa -lcasa_tables -lcasa_measures -lcasa_ms -lcfitsio
+
+LAPACK=-llapack -lblas -lgfortran -lpthread
+
+WCSI=-I/usr/include/wcslib
+WCSLIBS=-lwcs
+
+JAVAINC=-I${JAVA_HOME}/include -I${JAVA_HOME}/include/linux
+
+# glib
+GLIBI=-I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include -I/usr/lib/x86_64-linux-gnu/glib-2.0/include/
+GLIBL=-lglib-2.0
+
+
+# with multithread FFTW
+MY_LIBS=-llargefft -lfftw3f_threads -lfftw3f -lm $(WCSLIBS)
+INCLUDES=-I. -I../lib $(CASA_INCDIR) -I/usr/include $(WCSI) $(GLIBI)
+LIBPATH=-L$(CASA_LIBDIR) -L../lib $(WCSL)
+
+
+##### hdfs stuff
+#HDFSINC=-I/opt/hadoop-2.8.0/include
+#HDFSLIBPATH=-L/opt/hadoop-2.8.0/lib/native
+#HDFSLIBS=-lhadooppipes -lhadooputils -lhdfs
+
+OBJECTS=Driver.o data.o helper.o pthgridder.o pthweighter.o pthpipe_menon.o snapshot.o
+
+default: build
+
+data.o:data.cpp data.h
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $<
+helper.o:helper.cpp helper.h
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $<
+pthgridder.o:pthgridder.cpp pthgridder.h
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $<
+pthweighter.o:pthweighter.cpp pthgridder.h
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $<
+pthpipe_menon.o:pthpipe_menon.cpp pthgridder.h
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $<
+snapshot.o:snapshot.cpp pthgridder.h
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $<
+
+Driver.class:Driver.java
+	$(JAVAC) $<
+Driver.h:Driver.class
+	$(JAVAH) $*
+Driver.o:Driver.cpp Driver.h
+	$(CXX) $(CXXFLAGS) $(INCLUDES) $(JAVAINC) $(HDFSINC) -c $<
+#libDriver.so:$(OBJECTS) lib/liblargefft.a
+libDriver.so:$(OBJECTS) 
+	$(CXX) -shared $(CXXFLAGS) $(LDFLAGS) $(INCLUDES) $(LIBPATH) $(HDFSLIBPATH) -o $@  $(OBJECTS) $(MY_LIBS) $(LAPACK) $(CASA_LIBS) $(GLIBL) $(HDFSLIBS)
+
+
+libs:
+	cd ../lib && $(MAKE) -f Makefile.nocuda clean
+	cd ../lib && $(MAKE) -f Makefile.nocuda
+
+ms:
+	cd ../MS && $(MAKE) -f Makefile.nocuda clean
+	cd ../MS && $(MAKE) -f Makefile.nocuda
+
+clean:
+	cd ../lib && $(MAKE) -f Makefile.nocuda clean
+	cd ../MS && $(MAKE) -f Makefile.nocuda clean
+	rm -rf *.o *.so *.jar *.class Driver.h *.tmp
+
+
+
+jar:Driver.class
+	@echo "Manifest-Version: 1.0" > manifest.txt
+	@echo "Main-Class: Driver" >> manifest.txt
+	@echo "Class-Path: ." >> manifest.txt
+	#@echo "Class-Path: /opt/dirac/excon/JAVA" >> manifest.txt
+	#@echo "Library-Path: /opt/dirac/excon/JAVA" >> manifest.txt
+	#@echo "Library-Path: /usr/local/lib/" >> manifest.txt
+	@echo "" >> manifest.txt
+	@jar cmfv manifest.txt Driver.jar $*
+	@rm -f manifest.txt
+
+
+.SILENT:testlib
+testlib:
+	echo
+	echo "TESTING LIB:"
+	echo
+	#java -Djava.library.path=$(shell pwd) -cp . Driver -m /opt/dirac/datasets
+	java -Djava.library.path=$(shell pwd) Driver
+
+
+.SILENT:testjar
+testjar:
+	echo
+	echo "TESTING JAR:"
+	echo
+	#java -Djava.library.path=$(shell pwd) -jar Driver.jar -m /opt/dirac/datasets/sm.ms
+	java -Djava.library.path=$(shell pwd) -jar Driver.jar
+
+
+
+build: libs ms Driver.class Driver.h Driver.o libDriver.so jar
+test: testlib testjar
+all: build test
