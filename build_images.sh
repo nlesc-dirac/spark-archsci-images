@@ -2,6 +2,8 @@
 
 # https://docs.docker.com/engine/reference/commandline/build/#squash-an-images-layers-squash-experimental-only
 
+#docker image prune -a
+
 version=$(date +"%d%m%Y")
 
 #export DOCKER_ID_USER=$(whoami)
@@ -43,5 +45,6 @@ do
 
 
     ## https://docs.docker.com/docker-cloud/builds/push-images/
-    #docker push fdiblen/$name:$version
+    docker push fdiblen/$name:$version
+    docker push fdiblen/$name:latest
 done
