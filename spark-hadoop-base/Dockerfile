@@ -13,6 +13,7 @@ RUN pacman -Syyuu --noconfirm --needed
 RUN pacman -S --noconfirm --needed \
     jdk8-openjdk \
     ipython2 ipython r rsync
+RUN archlinux-java set java-8-openjdk/jre
 
 RUN mkdir -p /opt/soft
 
