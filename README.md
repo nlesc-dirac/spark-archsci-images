@@ -1,11 +1,11 @@
 # About
 Docker images for Apache Swarm cluster with HDFS. The images can be used to have a cluster for general use.
-There are also [images](https://github.com/nlesc-dirac/spark-docker-swarm) for DIRAC project to run SageCal
+There are also [images](https://github.com/nlesc-dirac/spark-docker-swarm) for DIRAC project to run SageCal.
 
 
 # Images
 
-## General 
+## For general use
 | Name    | info   |
 | ------- | --------- |
 | spark-hadoop-base  | base image for Spark and Hadoop |
