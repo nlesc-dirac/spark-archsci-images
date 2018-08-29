@@ -11,7 +11,7 @@ pacman -S --needed --noconfirm \
     gcc-fortran \
     mpfr hdf5 cfitsio wcslib \
     python2-numpy boost fftw \
-    openmp openmpi python3-numpy
+    openmp openmpi python-numpy
 
 sudo -H -u archsci bash -c 'yaourt -S --needed --noconfirm sofa'
 

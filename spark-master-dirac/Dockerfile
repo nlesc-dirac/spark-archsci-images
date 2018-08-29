@@ -17,8 +17,6 @@ RUN chmod +x /tmp/compile_casa.sh && \
     bash /tmp/compile_casa.sh && \
     rm -f /tmp/compile_casa.sh
 
-COPY dirac /opt/dirac
-
 ADD scripts/compile_sagecal.sh /tmp/
 RUN chmod +x /tmp/compile_sagecal.sh && \
     bash /tmp/compile_sagecal.sh && \
