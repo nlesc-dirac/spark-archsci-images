@@ -44,7 +44,7 @@ do
     fi
 
 
-    ## https://docs.docker.com/docker-cloud/builds/push-images/
-    docker push fdiblen/$name:$version
-    docker push fdiblen/$name:latest
+    ### https://docs.docker.com/docker-cloud/builds/push-images/
+    #docker push fdiblen/$name:$version
+    #docker push fdiblen/$name:latest
 done
