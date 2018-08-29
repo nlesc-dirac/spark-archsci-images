@@ -4,12 +4,10 @@ MAINTAINER fdiblen
 USER root
 ENV DISPLAY :0
 
-
 ADD scripts/install_packages.sh /tmp/
 RUN chmod +x /tmp/install_packages.sh && \
     bash /tmp/install_packages.sh && \
     rm -f /tmp/install_packages.sh
-
 
 ENV HADOOP_VERSION  2.7.5
 ENV HADOOP_HOME /opt/soft/hadoop
