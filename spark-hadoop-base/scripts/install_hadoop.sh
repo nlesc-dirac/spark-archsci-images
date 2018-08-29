@@ -7,11 +7,13 @@ echo ""
 cd $(mktemp -d)
 pwd
 
-#version=2.7.5
-version=2.7.5
+
+version=2.7.6
 
 # Install Hadoop
-wget -c --quiet http://ftp.nluug.nl/internet/apache/hadoop/common/hadoop-$version/hadoop-$version.tar.gz
+
+#wget -c --quiet http://ftp.nluug.nl/internet/apache/hadoop/common/hadoop-$version/hadoop-$version.tar.gz
+wget -c --quiet http://www-eu.apache.org/dist/hadoop/common/hadoop-$version/hadoop-$version.tar.gz
 tar -xzf hadoop-*.tar.gz
 rm -rf hadoop*.tar.gz
 mv hadoop-* /opt/soft/
